@@ -134,7 +134,7 @@ public class EnrollmentStoreImpl implements EnrollmentStore {
             ") " +
             "WHERE TrackedEntityInstance.state = 'TO_POST' OR TrackedEntityInstance.state = 'TO_UPDATE' "
             +
-            " OR Enrollment.state = 'TO_POST' OR Enrollment.state = 'TO_UPDATE';";
+            " OR Enrollment.state = 'TO_POST' OR Enrollment.state = 'TO_UPDATE' OR Enrollment.state = 'TO_DELETE';";
 
     private static final String QUERY_STATEMENT = "SELECT " +
             FIELDS +
@@ -310,7 +310,7 @@ public class EnrollmentStoreImpl implements EnrollmentStore {
                             null : Double.parseDouble(cursor.getString(12));
                     Double longitude = cursor.getString(13) == null ?
                             null : Double.parseDouble(cursor.getString(13));
-                    // "state" field is ignored
+                    String stateStr = cursor.getString(14);
 
                     if (enrollmentMap.get(trackedEntityInstance) == null) {
                         enrollmentMap.put(trackedEntityInstance, new ArrayList<Enrollment>());
@@ -322,10 +322,12 @@ public class EnrollmentStoreImpl implements EnrollmentStore {
                         coordinates = Coordinates.create(latitude, longitude);
                     }
 
+                    Boolean deleted = stateStr != null && stateStr.equals(State.TO_DELETE.toString());
+
                     enrollmentMap.get(trackedEntityInstance).add(Enrollment.create(
                             uid, created, lastUpdated, createdAtClient, lastUpdatedAtClient,
                             organisationUnit, program, enrollmentDate, incidentDate, followUp,
-                            status, trackedEntityInstance, coordinates, false, null, getNotes(uid)
+                            status, trackedEntityInstance, coordinates, deleted, null, getNotes(uid)
                     ));
                 }
                 while (cursor.moveToNext());
