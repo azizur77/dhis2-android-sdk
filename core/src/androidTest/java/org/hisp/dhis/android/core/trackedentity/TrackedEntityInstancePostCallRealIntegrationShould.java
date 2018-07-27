@@ -10,6 +10,7 @@ import org.hisp.dhis.android.core.common.State;
 import org.hisp.dhis.android.core.data.database.AbsStoreTestCase;
 import org.hisp.dhis.android.core.data.server.RealServerMother;
 import org.hisp.dhis.android.core.enrollment.Enrollment;
+import org.hisp.dhis.android.core.enrollment.EnrollmentModel;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStore;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStoreImpl;
@@ -296,6 +297,35 @@ public class TrackedEntityInstancePostCallRealIntegrationShould extends AbsStore
             if (eventToCheck.uid().equals(eventUid)) {
                 deleted = false;
             }
+        }
+
+        assertThat(deleted).isEqualTo(true);
+    }
+
+    //@Test
+    public void post_a_tei_and_delete_one_enrollment() throws Exception {
+        downloadMetadata();
+        d2.downloadTrackedEntityInstancesByUid(Lists.newArrayList("LxMVYhJm3Jp")).call();
+
+        TrackedEntityInstance tei = trackedEntityInstanceStore.queryAll().values().iterator().next();
+
+        Enrollment enrollment = enrollmentStore.queryAll().values().iterator().next().get(0);
+
+        String enrollmentUid = enrollment.uid();
+
+        trackedEntityInstanceStore.setState(tei.uid(), State.TO_UPDATE);
+        enrollmentStore.setState(enrollmentUid, State.TO_DELETE);
+
+        d2.syncTrackedEntityInstances().call();
+
+        d2.wipeDB().call();
+        downloadMetadata();
+        d2.downloadTrackedEntityInstancesByUid(Lists.newArrayList("LxMVYhJm3Jp")).call();
+
+        Boolean deleted = true;
+        EnrollmentModel enrollmentModel = enrollmentStore.queryByUid(enrollmentUid);
+        if (enrollmentModel != null && enrollmentModel.uid().equals(enrollmentUid)) {
+            deleted = false;
         }
 
         assertThat(deleted).isEqualTo(true);
